@@ -64,6 +64,11 @@ foreach(package ${PACKAGES})
     string(APPEND IDF_INCLUDES "${${package}_includes_string}")
 endforeach()
 
+if(NOT CMAKE_C_COMPILER)
+    string(REGEX REPLACE "-ar$" "-gcc" CMAKE_C_COMPILER "${CMAKE_AR}")
+    string(REGEX REPLACE "-ar$" "-g++" CMAKE_CXX_COMPILER "${CMAKE_AR}")
+endif()
+
 execute_process(
     WORKING_DIRECTORY ${COMPONENT_DIR}
     RESULT_VARIABLE libmicroros_ret

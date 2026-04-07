@@ -14,12 +14,15 @@
 #include <rclc/rclc.h>
 #include <rclc/executor.h>
 
+#include "ir_sensor.h"
+
 #ifdef CONFIG_MICRO_ROS_ESP_XRCE_DDS_MIDDLEWARE
 #include <rmw_microros/rmw_microros.h>
 #endif
 
 #define RCCHECK(fn) { rcl_ret_t temp_rc = fn; if((temp_rc != RCL_RET_OK)){printf("Failed status on line %d: %d. Aborting.\n",__LINE__,(int)temp_rc);vTaskDelete(NULL);}}
 #define RCSOFTCHECK(fn) { rcl_ret_t temp_rc = fn; if((temp_rc != RCL_RET_OK)){printf("Failed status on line %d: %d. Continuing.\n",__LINE__,(int)temp_rc);}}
+#define IR_GPIO_PIN 15
 
 rcl_publisher_t publisher;
 std_msgs__msg__Int32 msg;
@@ -28,9 +31,13 @@ void timer_callback(rcl_timer_t * timer, int64_t last_call_time)
 {
 	RCLC_UNUSED(last_call_time);
 	if (timer != NULL) {
-		printf("Publishing: %d\n", (int) msg.data);
-		RCSOFTCHECK(rcl_publish(&publisher, &msg, NULL));
-		msg.data++;
+		// printf("Publishing: %d\n", (int) msg.data);
+		// RCSOFTCHECK(rcl_publish(&publisher, &msg, NULL));
+		// msg.data++;
+		// Simple integration:
+        msg.data = ir_sensor_get_count(); 
+        rcl_publish(&publisher, &msg, NULL);
+
 	}
 }
 
@@ -98,6 +105,8 @@ void app_main(void)
 #if defined(CONFIG_MICRO_ROS_ESP_NETIF_WLAN) || defined(CONFIG_MICRO_ROS_ESP_NETIF_ENET)
     ESP_ERROR_CHECK(uros_network_interface_initialize());
 #endif
+
+	ir_sensor_init(IR_GPIO_PIN); 
 
     //pin micro-ros task in APP_CPU to make PRO_CPU to deal with wifi:
     xTaskCreate(micro_ros_task,
